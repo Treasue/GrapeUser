@@ -16,6 +16,10 @@ import org.json.simple.JSONObject;
 import common.DBHelper;
 import common.StringHelper;
 import common.formHelper;
+import database.db;
+import interfaceApplication.user;
+import net.bytebuddy.asm.Advice.Return;
+import session.session;
 
 public class userModel {
 	private static DBHelper db;
@@ -46,60 +50,80 @@ public class userModel {
 	static{
 		db = new DBHelper("mongodb", "user");
 	}
-	private int errno;
-	/**
-	 * 用户注册
-	 * @param _userInfo
-	 * @return		大于 0:返回用户 ID，表示用户注册成功
-	 * 				mongodb 返回 objectid string类型
-					-1:用户名不合法
-					-2:包含不允许注册的词语
-					-3:用户名已经存在
-					-4:Email 格式有误
-					//-5:Email 不允许注册
-					-6:该 Email 已经被注册
-					-7:提交的数据包含不合法的数据
-					-8:不存在用户EMAIL或者手机号
-					-9:必填数据没有填
-	 */
-	public Object user_register(JSONObject _userInfo){
-		int chkcode = _form.check_forminfo(_userInfo);
-		if( chkcode == 1 ){
-			return 9;
-		}
-		if( chkcode == 2 ){
-			return 8;
-		}
-		String userName = _userInfo.get("id").toString();
-		if( !check_username(userName) ){
-			return 1;
-		}
-		if( find_usernamebyID(userName) != null){
-			return 3;
-		}
-		String email = _userInfo.get("email").toString();
-		if(!StringHelper.checkEmail(email) ){
-			return 4;
-		}
-		if( find_usernamebyEmail(email) != null){
-			return 6;
-		}
-		return db.data(_userInfo).insertOnce().toString();
-	}
 	
+	public db getDB(){
+		return db;
+	}
 	public JSONObject find_usernamebyID(String userName){
-		return db.eq("id", userName).find();
+		JSONObject rs = db.eq("id", userName).find();
+		return rs == null ? new JSONObject() : rs;
 	}
 	public JSONObject find_usernamebyEmail(String email){
-		return db.eq("email", email).find();
+		JSONObject rs = db.eq("email", email).find();
+		return rs == null ? new JSONObject() : rs;
+	}
+	public JSONObject find_usernamebyMoblie(String phoneno){
+		JSONObject rs = db.eq("mobphone", phoneno).find();
+		return rs == null ? new JSONObject() : rs;
+	}
+	public boolean check_user(String id,String pw){
+		return db.eq("id", id).eq("password", pw).find() == null;
 	}
 	
-	private boolean check_username(String userName){
+	public boolean check_username(String userName){
 		String regex = "([a-z]|[A-Z]|[0-9]|[\\u4e00-\\u9fa5])+";
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(userName);
 		return ( userName.length() >= 7 && userName.length() <= 15 ) && m.matches();
 	}
 	
-
+	public Object register_username(JSONObject _userInfo){
+		return db.data(_userInfo).insertOnce().toString();
+	}
+	
+	/**
+	 * @param userName
+	 * @param userPassword
+	 * @param loginMode
+	 * 			0：用户名登录
+	 * 			1:email登录
+	 * 			2：手机号登录
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public JSONObject login_username(String userName,String userPassword,int loginMode){
+		String _checkField = "";
+		switch(loginMode){
+		case 0:
+			_checkField = "id";
+			break;
+		case 1:
+			_checkField = "email";
+			break;
+		case 2:
+			_checkField = "mobphone";
+			break;
+		}
+		JSONObject rs = db.eq(_checkField, userPassword).eq("password", userPassword).find();
+		if( rs != null){
+			session sem = new session();
+			rs.put("sid", sem.insertSession( userName,rs.toJSONString() ));
+			;//增加登录日志
+		}
+		return rs;
+	}
+	
+	public void logout_username(String uuid){
+		session sem = new session();
+		sem.deleteSession(uuid);
+	}
+	
+	public long getpoint_username(String username){
+		long rl = 0;
+		JSONObject rs = db.eq("id", username).field("point").find();
+		if( rs != null){
+			rl = Long.parseLong( rs.get("point").toString() );
+		}
+		return rl;
+	}
 }
