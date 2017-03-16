@@ -68,7 +68,7 @@ public class userModel {
 		return rs == null ? new JSONObject() : rs;
 	}
 	public boolean check_user(String id,String pw){
-		pw = codec.md5( pw.toString() );
+		pw = secPassword( pw.toString() );
 		return db.eq("id", id).eq("password", pw).find() == null;
 	}
 	
@@ -81,7 +81,7 @@ public class userModel {
 	
 	@SuppressWarnings("unchecked")
 	public Object register_username(JSONObject _userInfo){
-		String secpassword = codec.md5( _userInfo.get("password").toString() );
+		String secpassword = secPassword(_userInfo.get("password").toString());
 		_userInfo.replace("password", secpassword);
 		return db.data(_userInfo).insertOnce().toString();
 	}
@@ -131,5 +131,8 @@ public class userModel {
 			rl = Long.parseLong( rs.get("point").toString() );
 		}
 		return rl;
+	}
+	private String secPassword(String password){
+		return codec.md5( password );
 	}
 }
