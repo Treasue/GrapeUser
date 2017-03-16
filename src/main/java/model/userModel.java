@@ -19,13 +19,14 @@ import common.formHelper;
 import database.db;
 import interfaceApplication.user;
 import net.bytebuddy.asm.Advice.Return;
+import security.codec;
 import session.session;
 
 public class userModel {
 	private static DBHelper db;
 	//private static String[] notnullfield = {"id","pw","name","registerip","wbid"};//不为空字段
 	private formHelper _form;
-	private userModel(){
+	public userModel(){
 		_form = new formHelper();
 		_form.addNotNull("id,pw,name,registerip,wbid");
 		HashMap<String, Object> checkfield = new HashMap<String, Object>();
@@ -67,6 +68,7 @@ public class userModel {
 		return rs == null ? new JSONObject() : rs;
 	}
 	public boolean check_user(String id,String pw){
+		pw = codec.md5( pw.toString() );
 		return db.eq("id", id).eq("password", pw).find() == null;
 	}
 	
@@ -77,7 +79,10 @@ public class userModel {
 		return ( userName.length() >= 7 && userName.length() <= 15 ) && m.matches();
 	}
 	
+	@SuppressWarnings("unchecked")
 	public Object register_username(JSONObject _userInfo){
+		String secpassword = codec.md5( _userInfo.get("password").toString() );
+		_userInfo.replace("password", secpassword);
 		return db.data(_userInfo).insertOnce().toString();
 	}
 	
@@ -104,6 +109,7 @@ public class userModel {
 			_checkField = "mobphone";
 			break;
 		}
+		userPassword = codec.md5(userPassword);
 		JSONObject rs = db.eq(_checkField, userPassword).eq("password", userPassword).find();
 		if( rs != null){
 			session sem = new session();
