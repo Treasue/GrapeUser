@@ -16,14 +16,15 @@ import common.StringHelper;
 import common.formHelper;
 import common.jGrapeFW_Message;
 import model.userModel;
+import security.codec;
 import session.session;
 
 public class user{
-	private userModel user;
+	private userModel user = new userModel();
 	private formHelper _form;
 	public user(){
 		_form = new formHelper();
-		_form.addNotNull("id,pw,name,registerip,wbid");
+		_form.addNotNull("id,password,name,registerip,wbid");
 		HashMap<String, Object> checkfield = new HashMap<String, Object>();
 		checkfield.put("email", "");
 		checkfield.put("mobphone", "");
@@ -126,7 +127,8 @@ public class user{
 				return resultMessage(7);
 			}
 		}
-		String password = "";
+//		String password = "";
+		String password = _userInfo.get("password").toString();
 		if( _userInfo.containsKey("loginmode") && password.length() < 3){
 			return resultMessage(10);
 		}
@@ -160,8 +162,9 @@ public class user{
 	 * @param moblie 手机号
 	 * @return
 	 */
-	public String user_get_moblie(int moblie){
-		return user.find_usernamebyMoblie(String.valueOf(moblie) ).toJSONString();
+	public String user_get_moblie(String moblie){
+//		return user.find_usernamebyMoblie(String.valueOf(moblie) ).toJSONString();
+		return user.find_usernamebyMoblie(moblie).toJSONString();
 	}
 	
 	/**
@@ -193,9 +196,12 @@ public class user{
 			return resultMessage(11);
 		}
 		ndata = new JSONObject();
-		ndata.put("password", newPW);
-		ndata = user.getDB().eq("id", id).eq("password", oldPW).data(ndata).update();
-		return resultMessage( ndata == null ? 0 : 99,"密码修改成功");
+//		ndata.put("password", newPW);
+		ndata.put("password", codec.md5(newPW));
+		ndata = user.getDB().eq("id", id).eq("password", codec.md5(oldPW)).data(ndata).update();
+		return resultMessage( ndata != null ? 0 : 99,"密码修改成功");
+//		ndata = user.getDB().eq("id", id).eq("password", oldPW).data(ndata).update();
+//		return resultMessage( ndata == null ? 0 : 99,"密码修改成功");
 	}
 	/**更新用户信息
 	 * @param userInfo
@@ -221,7 +227,8 @@ public class user{
 				return resultMessage(7);
 			}
 		}
-		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.check_user(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
+//		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.check_user(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
+		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.check_user(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().eq("id", _userInfo.get("id").toString()).data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
 	}
 	
 	private String resultMessage(int no){

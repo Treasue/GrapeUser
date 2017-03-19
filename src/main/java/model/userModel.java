@@ -28,7 +28,7 @@ public class userModel {
 	private formHelper _form;
 	public userModel(){
 		_form = new formHelper();
-		_form.addNotNull("id,pw,name,registerip,wbid");
+		_form.addNotNull("id,password,name,registerip,wbid");
 		HashMap<String, Object> checkfield = new HashMap<String, Object>();
 		checkfield.put("email", "");
 		checkfield.put("mobphone", "");
@@ -57,19 +57,22 @@ public class userModel {
 	}
 	public JSONObject find_usernamebyID(String userName){
 		JSONObject rs = db.eq("id", userName).find();
-		return rs == null ? new JSONObject() : rs;
+//		return rs == null ? new JSONObject() : rs;
+		return rs;
 	}
 	public JSONObject find_usernamebyEmail(String email){
 		JSONObject rs = db.eq("email", email).find();
-		return rs == null ? new JSONObject() : rs;
+//		return rs == null ? new JSONObject() : rs;
+		return rs;
 	}
 	public JSONObject find_usernamebyMoblie(String phoneno){
 		JSONObject rs = db.eq("mobphone", phoneno).find();
-		return rs == null ? new JSONObject() : rs;
+//		return rs == null ? new JSONObject() : rs;
+		return rs;
 	}
 	public boolean check_user(String id,String pw){
 		pw = secPassword( pw.toString() );
-		return db.eq("id", id).eq("password", pw).find() == null;
+		return db.eq("id", id).eq("password", pw).find() != null;
 	}
 	
 	public boolean check_username(String userName){
@@ -110,7 +113,7 @@ public class userModel {
 			break;
 		}
 		userPassword = codec.md5(userPassword);
-		JSONObject rs = db.eq(_checkField, userPassword).eq("password", userPassword).find();
+		JSONObject rs = db.eq(_checkField, userName).eq("password", userPassword).find();
 		if( rs != null){
 			session sem = new session();
 			rs.put("sid", sem.insertSession( userName,rs.toJSONString() ));
