@@ -1,4 +1,4 @@
-/**
+ /**
  * 用户子系统接口类,控制器
  */
 /**
@@ -8,23 +8,26 @@
 package interfaceApplication;
 
 import java.util.HashMap;
+import java.util.Set;
 
+import org.bson.types.ObjectId;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import common.JSONHelper;
-import common.StringHelper;
-import common.formHelper;
-import common.jGrapeFW_Message;
+import esayhelper.JSONHelper;
+import esayhelper.StringHelper;
+import esayhelper.formHelper;
+import esayhelper.jGrapeFW_Message;
 import model.userModel;
 import security.codec;
 import session.session;
 
 public class user{
-	private userModel user = new userModel();
+	private userModel user;
 	private formHelper _form;
 	public user(){
 		_form = new formHelper();
-		_form.addNotNull("id,password,name,registerip,wbid");
+		_form.addNotNull("id,pw,name,registerip,wbid");
 		HashMap<String, Object> checkfield = new HashMap<String, Object>();
 		checkfield.put("email", "");
 		checkfield.put("mobphone", "");
@@ -59,7 +62,7 @@ public class user{
 					-8:不存在用户EMAIL或者手机号
 					-9:必填数据没有填
 	 */
-	public String user_register(String userInfo){
+	public String UserRegister(String userInfo){
 		JSONObject _userInfo = JSONHelper.string2json(userInfo);
 		int chkcode = _form.check_forminfo(_userInfo);
 		if( chkcode == 1 ){
@@ -69,27 +72,27 @@ public class user{
 			return resultMessage(8);
 		}
 		String userName = _userInfo.get("id").toString();
-		if( !user.check_username(userName) ){
+		if( !user.checkUserName(userName) ){
 			return resultMessage(1);
 		}
-		if( user.find_usernamebyID(userName) != null){
+		if( user.findUserNameByID(userName) != null){
 			return resultMessage(3);
 		}
 		String email = _userInfo.get("email").toString();
 		if(!StringHelper.checkEmail(email) ){
 			return resultMessage(4);
 		}
-		if( user.find_usernamebyEmail(email) != null){
+		if( user.findUserNameByEmail(email) != null){
 			return resultMessage(5);
 		}
 		String phoneno = _userInfo.get("mobphone").toString(); 
 		if(!StringHelper.checkMobileNumber(phoneno) ){
 			return resultMessage(7);
 		}
-		if( user.find_usernamebyMoblie(phoneno) != null){
+		if( user.findUserNameByMoblie(phoneno) != null){
 			return resultMessage(6);
 		}
-		return resultMessage(0,user.register_username(_userInfo).toString());
+		return resultMessage(0,user.registerUsername(_userInfo).toString());
 	}
 	
 	/**
@@ -102,7 +105,7 @@ public class user{
 	 * 			2：手机号登录
 	 * @return 除了密码以外的全部数据
 	 */
-	public String user_login(String userInfo){
+	public String UserLogin(String userInfo){
 		JSONObject _userInfo = JSONHelper.string2json(userInfo);
 		int loginMode = 0;
 		String userName = "";
@@ -111,7 +114,7 @@ public class user{
 		}
 		if( loginMode == 0 ){
 			userName = _userInfo.get("id").toString();
-			if(!user.check_username(_userInfo.get("id").toString())){
+			if(!user.checkUserName(_userInfo.get("id").toString())){
 				return resultMessage(1);
 			}
 		}
@@ -127,12 +130,11 @@ public class user{
 				return resultMessage(7);
 			}
 		}
-//		String password = "";
-		String password = _userInfo.get("password").toString();
+		String password = "";
 		if( _userInfo.containsKey("loginmode") && password.length() < 3){
 			return resultMessage(10);
 		}
-		JSONObject uobj = user.login_username(userName, password, loginMode);
+		JSONObject uobj = user.loginUsername(userName, password, loginMode);
 		if( uobj != null ){
 			uobj.remove("password");
 		}
@@ -143,9 +145,9 @@ public class user{
 	 * @param uuid
 	 * @return
 	 */
-	public String user_logout(String uuid){
+	public String UserLogout(String uuid){
 		if( uuid.length() > 1 && uuid.length() < 128 ){
-			user.logout_username(uuid);
+			user.logoutUsername(uuid);
 		}
 		return resultMessage(0,"退出成功");
 	}
@@ -154,33 +156,32 @@ public class user{
 	 * @param id
 	 * @return
 	 */
-	public String user_getpoint(String id){
-		return String.valueOf(user.getpoint_username(id)); 
+	public String UserGetPoint(String id){
+		return String.valueOf(user.getPointUsername(id)); 
 	}
 	
 	/**
 	 * @param moblie 手机号
 	 * @return
 	 */
-	public String user_get_moblie(String moblie){
-//		return user.find_usernamebyMoblie(String.valueOf(moblie) ).toJSONString();
-		return user.find_usernamebyMoblie(moblie).toJSONString();
+	public String UserGetMoblie(int moblie){
+		return user.findUserNameByMoblie(String.valueOf(moblie) ).toJSONString();
 	}
 	
 	/**
 	 * @param id 用户ID
 	 * @return
 	 */
-	public String user_get(String id){
-		return user.find_usernamebyID(id).toJSONString(); 
+	public String UserGet(String id){
+		return user.findUserNameByID(id).toJSONString(); 
 	}
 	
 	/**
 	 * @param email email地址
 	 * @return
 	 */
-	public String user_get_email(String email){
-		return user.find_usernamebyEmail(email).toJSONString();
+	public String UserGetEmail(String email){
+		return user.findUserNameByEmail(email).toJSONString();
 	}
 	
 	/**修改密码
@@ -190,27 +191,24 @@ public class user{
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public String user_changePW(String id,String oldPW,String newPW){
+	public String UserChangePW(String id,String oldPW,String newPW){
 		JSONObject ndata;
-		if( !user.check_user(id,oldPW) ){
+		if( !user.checkUser(id,oldPW) ){
 			return resultMessage(11);
 		}
 		ndata = new JSONObject();
-//		ndata.put("password", newPW);
 		ndata.put("password", codec.md5(newPW));
-		ndata = user.getDB().eq("id", id).eq("password", codec.md5(oldPW)).data(ndata).update();
+		ndata = user.getDB().eq("id", id).eq("password", oldPW).data(ndata).update();
 		return resultMessage( ndata != null ? 0 : 99,"密码修改成功");
-//		ndata = user.getDB().eq("id", id).eq("password", oldPW).data(ndata).update();
-//		return resultMessage( ndata == null ? 0 : 99,"密码修改成功");
 	}
 	/**更新用户信息
 	 * @param userInfo
 	 * @return
 	 */
-	public String user_edit(String userInfo){
+	public String UserEdit(String id,String userInfo){
 		JSONObject _userInfo = JSONHelper.string2json(userInfo);
 		if( _userInfo.containsKey("id")){
-			if( !user.check_username(_userInfo.get("id").toString()) ){
+			if( !user.checkUserName(_userInfo.get("id").toString()) ){
 				return resultMessage(1);
 			}
 		}
@@ -227,8 +225,72 @@ public class user{
 				return resultMessage(7);
 			}
 		}
-//		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.check_user(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
-		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.check_user(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().eq("id", _userInfo.get("id").toString()).data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
+		return resultMessage( user.getDB().eq("_id", new ObjectId(id)).data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
+//		return resultMessage(( _userInfo.containsKey("id") && _userInfo.containsKey("password") && user.checkUser(_userInfo.get("id").toString(), _userInfo.get("password").toString()) ) && user.getDB().data(userInfo).update() != null ? 0 : 99,"更新用户数据成功");
+	}
+	
+	public String UserDelete(String userid) {
+		return resultMessage(user.getDB().eq("_id", new ObjectId(userid)).delete()!=null?0:99, "删除用户成功");
+	}
+	public String UserSearch(String userinfo) {
+		JSONObject object = JSONHelper.string2json(userinfo);
+		@SuppressWarnings("unchecked")
+		Set<Object> set = object.keySet();
+		for (Object object2 : set) {
+			user.getDB().eq(object2.toString(), object.get(object2.toString()));
+		}
+		return user.getDB().select().toJSONString();
+	}
+	public String UserSelect() {
+		return user.getDB().select().toString();
+	}
+	public String UserPage(int idx,int pageSize) {
+		JSONArray array = user.getDB().page(idx, pageSize);
+		@SuppressWarnings("unchecked")
+		JSONObject object = new JSONObject(){
+			private static final long serialVersionUID = 1L;
+
+			{
+				put("totalSize", (int)Math.ceil((double)array.size()/pageSize));
+				put("currentPage", idx);
+				put("pageSize", pageSize);
+				put("data", array);
+				
+			}
+		};
+		return object.toString();
+	}
+	public String UserPageBy(int idx,int pageSize,String userinfo) {
+		@SuppressWarnings("unchecked")
+		Set<Object> set = JSONHelper.string2json(userinfo).keySet();
+		for (Object object2 : set) {
+			user.getDB().eq(object2.toString(), JSONHelper.string2json(userinfo).get(object2.toString()));
+		}
+		JSONArray array = user.getDB().page(idx, pageSize);
+		@SuppressWarnings("unchecked")
+		JSONObject object = new JSONObject(){
+			private static final long serialVersionUID = 1L;
+			{
+				put("totlsize", (int)Math.ceil((double)array.size()/pageSize));
+				put("currentPage", idx);
+				put("PageSize", pageSize);
+				put("data", user.getDB().page(idx, pageSize).toString());
+				
+			}
+		};
+		return object.toString();
+//		return .toString();
+	}
+	public String UserBatchDelete(String[] arr) {
+		StringBuffer stringBuffer = new StringBuffer();
+		for (int i = 0; i < arr.length; i++) {
+			String codes = UserDelete(arr[i]);
+			long code = (long) JSONHelper.string2json(codes).get("errorcode");
+			if (code != 0) {
+				stringBuffer.append((i + 1) + ",");
+			}
+		}
+		return resultMessage( stringBuffer.length()==0?0:99,"批量删除成功");
 	}
 	
 	private String resultMessage(int no){
