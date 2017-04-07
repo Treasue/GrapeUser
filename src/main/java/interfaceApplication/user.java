@@ -280,8 +280,7 @@ public class user{
 		return object.toString();
 	}
 	public String UserBatchDelete(String userinfo) {
-		String[] arr = userinfo.split(",");
-		return resultMessage(user.batch(arr));
+		return resultMessage(user.batch(userinfo.split(",")));
 	}
 	
 	private String resultMessage(int no){

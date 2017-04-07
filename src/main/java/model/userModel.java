@@ -136,11 +136,12 @@ public class userModel {
 	public String select() {
 		return db.select().toString();
 	}
+
 	public int batch(String[] arr) {
 		db = (DBHelper) db.or();
 		for (String string : arr) {
 			db.eq("_id", string);
 		}
-		return db.delete()!=null?0:99;
+		return db.delete()!= null ? 0 : 99;
 	}
 }
