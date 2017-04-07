@@ -20,10 +20,9 @@ import esayhelper.formHelper;
 import esayhelper.jGrapeFW_Message;
 import model.userModel;
 import security.codec;
-import session.session;
 
 public class user{
-	private userModel user;
+	private userModel user = new userModel();
 	private formHelper _form;
 	public user(){
 		_form = new formHelper();
@@ -279,18 +278,10 @@ public class user{
 			}
 		};
 		return object.toString();
-//		return .toString();
 	}
-	public String UserBatchDelete(String[] arr) {
-		StringBuffer stringBuffer = new StringBuffer();
-		for (int i = 0; i < arr.length; i++) {
-			String codes = UserDelete(arr[i]);
-			long code = (long) JSONHelper.string2json(codes).get("errorcode");
-			if (code != 0) {
-				stringBuffer.append((i + 1) + ",");
-			}
-		}
-		return resultMessage( stringBuffer.length()==0?0:99,"批量删除成功");
+	public String UserBatchDelete(String userinfo) {
+		String[] arr = userinfo.split(",");
+		return resultMessage(user.batch(arr));
 	}
 	
 	private String resultMessage(int no){

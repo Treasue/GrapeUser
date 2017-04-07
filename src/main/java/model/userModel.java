@@ -16,6 +16,7 @@ import org.json.simple.JSONObject;
 import database.db;
 import esayhelper.DBHelper;
 import esayhelper.formHelper;
+import interfaceApplication.user;
 import security.codec;
 import session.session;
 
@@ -135,5 +136,11 @@ public class userModel {
 	public String select() {
 		return db.select().toString();
 	}
-
+	public int batch(String[] arr) {
+		db = (DBHelper) db.or();
+		for (String string : arr) {
+			db.eq("_id", string);
+		}
+		return db.delete()!=null?0:99;
+	}
 }
