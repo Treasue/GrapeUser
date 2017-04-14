@@ -28,7 +28,7 @@ public class userModel {
 		_form = users.getChecker();
 	}
 	public userModel() {
-		_form.putRule("id"/*,password,name,registerip,wbid"*/, formHelper.formdef.notNull);
+		_form.putRule("id"/*,password,name,registerip,wbid"*/, formdef.notNull);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -310,7 +310,10 @@ public class userModel {
 	public String secPassword(String passwd) {
 		return codec.md5(passwd);
 	}
-
+//操作权限验证
+//	public String CheckPlv(String Username) {
+//		
+//	}
 	public String resultMessage(int num, String message) {
 		String msg = "";
 		switch (num) {

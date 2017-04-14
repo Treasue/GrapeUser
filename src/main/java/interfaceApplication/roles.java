@@ -22,6 +22,7 @@ public class roles {
 		defcol.put("sort", 0);
 		defcol.put("fatherid", 0);
 		defcol.put("wbid", 0);
+		defcol.put("plv", 0); // 权限值
 	}
 
 	public String RoleInsert(String roleInfo) {
@@ -47,14 +48,7 @@ public class roles {
 			if (code != 0) {
 				return rolesModel.resultMessage(2, "");
 			}
-			JSONObject object = (JSONObject) array.get(i);
-			if (object.containsKey("fatherid")) {
-				code = rolesModel.setFatherId(object.get("_id").toString(), object.get("fatherid")
-						.toString());
-			} else {
-				code = rolesModel.setsort(object.get("_id").toString(), Integer.parseInt(object
-						.get("sort").toString()));
-			}
+			code = rolesModel.update((JSONObject) array.get(i));
 		}
 		return rolesModel.resultMessage(code, "设置顺序或层级成功");
 	}
@@ -84,9 +78,11 @@ public class roles {
 		_obj.put("records", rolesModel.page(idx, pageSize, JSONHelper.string2json(roleInfo)));
 		return StringEscapeUtils.unescapeJava(rolesModel.resultMessage(0, _obj.toString()));
 	}
-	 public String RoleSetSort(String id,long sort) {
-	 return rolesModel.resultMessage(rolesModel.setsort(id, sort), "设置排序值成功");
-	 }
+
+	public String RoleSetSort(String id, int sort) {
+		return rolesModel.resultMessage(rolesModel.setsort(id, sort), "设置排序值成功");
+	}
+
 	public String RoleSetFatherId(String id, String fatherid) {
 		return rolesModel.resultMessage(rolesModel.setFatherId(id, fatherid), "上级用户组设置成功");
 	}
