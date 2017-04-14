@@ -85,6 +85,10 @@ public class user {
 		_obj.put("records", usermodel.select(JSONHelper.string2json(userinfo)));
 		return StringEscapeUtils.unescapeJava(usermodel.resultMessage(0, _obj.toString()));
 	}
+	public String UserFind(String id) {
+		_obj.put("records", usermodel.select(id));
+		return StringEscapeUtils.unescapeJava(usermodel.resultMessage(0, _obj.toString()));
+	}
 
 	public String UserPage(int idx, int pageSize) {
 		_obj.put("records", usermodel.page(idx, pageSize));

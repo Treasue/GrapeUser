@@ -184,6 +184,14 @@ public class userModel {
 		}
 		return users.select();
 	}
+	/**
+	 * 根据用户id查询用户信息
+	 * @param id
+	 * @return
+	 */
+	public JSONObject select(String id) {
+		return users.eq("id", id).find();
+	}
 	
 	public JSONObject page(int idx,int pageSize){
 		JSONArray array = users.page(idx, pageSize);
